@@ -109,10 +109,10 @@ MoveIt! framework and registers known conditions."
                                          (t `(,link-name))))
                        (poses-stamped (mapcar
                                        (lambda (pose-stamped)
-                                         (tf:pose->pose-stamped
-                                          (cl-tf2:unslash-frame (tf:frame-id
-                                                                 pose-stamped))
-                                          (tf:stamp pose-stamped)
+                                         (cl-tf-datatypes:pose->pose-stamped
+                                          (cl-tf2:unslash-frame
+                                           (cl-tf-datatypes:frame-id pose-stamped))
+                                          (cl-tf-datatypes:stamp pose-stamped)
                                           pose-stamped))
                                        (cond ((listp pose-stamped) pose-stamped)
                                              (t `(,pose-stamped)))))
@@ -124,7 +124,7 @@ MoveIt! framework and registers known conditions."
                                        reference-frame)
                                       (t `(,reference-frame))))
                                (poses-stamped
-                                (list (tf:frame-id (car poses-stamped)))))))
+                                (list (cl-tf-datatypes:frame-id (car poses-stamped)))))))
                   (let* ((mpreq (make-message
                                  "moveit_msgs/MotionPlanRequest"
                                  :group_name planning-group
@@ -137,7 +137,7 @@ MoveIt! framework and registers known conditions."
                                   :max-tilts max-tilts
                                   :reference-orientations
                                   (mapcar (lambda (pose)
-                                            (tf:orientation pose))
+                                            (cl-transforms:orientation pose))
                                           poses-stamped))
                                  :goal_constraints
                                  (cond ((and joint-names joint-positions)
@@ -479,8 +479,7 @@ success, and `nil' otherwise."
                   "moveit_msgs/PositionIKRequest"
                   :group_name planning-group
                   :ik_link_names (vector link-name)
-                  :pose_stamped_vector (vector (tf:pose-stamped->msg
-                                                pose-stamped))
+                  :pose_stamped_vector (vector (cl-tf2:to-msg pose-stamped))
                   :robot_state (or robot-state
                                    (make-message "moveit_msgs/RobotState"))))))
     (roslisp:with-fields (solution error_code) result
@@ -586,8 +585,8 @@ as only the final configuration IK is generated."
             :link_name link-name
             :header (make-message
                      "std_msgs/Header"
-                     :frame_id (tf:frame-id pose-stamped)
-                     :stamp (tf:stamp pose-stamped))
+                     :frame_id (cl-tf-datatypes:frame-id pose-stamped)
+                     :stamp (cl-tf-datatypes:stamp pose-stamped))
             :constraint_region
             (make-message
              "moveit_msgs/BoundingVolume"
@@ -597,7 +596,7 @@ as only the final configuration IK is generated."
                            :type (roslisp-msg-protocol:symbol-code
                                   'shape_msgs-msg:solidprimitive :sphere)
                            :dimensions (vector tolerance-radius)))
-             :primitive_poses (vector (tf:pose->msg pose-stamped)))))
+             :primitive_poses (vector (cl-tf2:to-msg pose-stamped)))))
           :orientation_constraints
           (vector
            (make-message
@@ -606,15 +605,15 @@ as only the final configuration IK is generated."
             :link_name link-name
             :header (make-message
                      "std_msgs/Header"
-                     :frame_id (tf:frame-id pose-stamped)
-                     :stamp (tf:stamp pose-stamped))
+                     :frame_id (cl-tf-datatypes:frame-id pose-stamped)
+                     :stamp (cl-tf-datatypes:stamp pose-stamped))
             :orientation
             (make-message
              "geometry_msgs/Quaternion"
-             :x (tf:x (tf:orientation pose-stamped))
-             :y (tf:y (tf:orientation pose-stamped))
-             :z (tf:z (tf:orientation pose-stamped))
-             :w (tf:w (tf:orientation pose-stamped)))
+             :x (cl-transforms:x (cl-transforms:orientation pose-stamped))
+             :y (cl-transforms:y (cl-transforms:orientation pose-stamped))
+             :z (cl-transforms:z (cl-transforms:orientation pose-stamped))
+             :w (cl-transforms:w (cl-transforms:orientation pose-stamped)))
             :absolute_x_axis_tolerance tolerance-radius
             :absolute_y_axis_tolerance tolerance-radius
             :absolute_z_axis_tolerance tolerance-radius))))
@@ -639,10 +638,10 @@ as only the final configuration IK is generated."
                                       :stamp (roslisp:ros-time)
                                       :frame_id reference-frame)
                 :orientation (make-message "geometry_msgs/Quaternion"
-                                           :x (tf:x reference-orientation)
-                                           :y (tf:y reference-orientation)
-                                           :z (tf:z reference-orientation)
-                                           :w (tf:w reference-orientation))
+                                           :x (cl-transforms:x reference-orientation)
+                                           :y (cl-transforms:y reference-orientation)
+                                           :z (cl-transforms:z reference-orientation)
+                                           :w (cl-transforms:w reference-orientation))
                 :link_name link-name
                 :absolute_x_axis_tolerance max-tilt
                 :absolute_y_axis_tolerance max-tilt
@@ -653,12 +652,17 @@ as only the final configuration IK is generated."
 
 (defun check-base-pose-validity (pose-stamped)
   (with-lock-held (*moveit-pose-validity-check-lock*)
-    (let* ((pose-stamped-oc (cl-tf2:ensure-pose-stamped-transformed
-                             *tf2* pose-stamped "odom_combined" :use-current-ros-time t))
-           (origin (tf:origin pose-stamped-oc))
-           (orientation (tf:orientation pose-stamped-oc)))
+    (let* ((pose-stamped-oc (cl-tf2:transform-pose
+                             *tf2-buffer*
+                             :pose (cl-tf-datatypes:copy-pose-stamped
+                                    pose-stamped
+                                    :stamp (roslisp:ros-time)) ; <- use current time
+                             :target-frame designators-ros:*odom-frame*
+                             :timeout cram-roslisp-common:*tf-default-timeout*))
+           (origin (cl-transforms:origin pose-stamped-oc))
+           (orientation (cl-transforms:orientation pose-stamped-oc)))
       (let ((adv (roslisp:advertise "/dhdhdh" "geometry_msgs/PoseStamped")))
-        (roslisp:publish adv (tf:pose-stamped->msg pose-stamped-oc)))
+        (roslisp:publish adv (cl-tf2:to-msg pose-stamped-oc)))
       (let ((result
               (roslisp:call-service
                "/check_state_validity"
@@ -674,7 +678,7 @@ as only the final configuration IK is generated."
                  (make-message
                   "std_msgs/Header"
                   :frame_id (concatenate 'string "/"
-                                         (tf:frame-id pose-stamped-oc)))
+                                         (cl-tf-datatypes:frame-id pose-stamped-oc)))
                  :joint_names (vector "virtual_joint")
                  :joint_transforms
                  (vector (make-message
@@ -682,15 +686,15 @@ as only the final configuration IK is generated."
                           :translation
                           (make-message
                            "geometry_msgs/Vector3"
-                           :x (tf:x origin)
-                           :y (tf:y origin)
-                           :z (tf:z origin))
+                           :x (cl-transforms:x origin)
+                           :y (cl-transforms:y origin)
+                           :z (cl-transforms:z origin))
                           :rotation
                           (make-message
                            "geometry_msgs/Quaternion"
-                           :x (tf:x orientation)
-                           :y (tf:y orientation)
-                           :z (tf:z orientation)
-                           :w (tf:w orientation)))))))))
+                           :x (cl-transforms:x orientation)
+                           :y (cl-transforms:y orientation)
+                           :z (cl-transforms:z orientation)
+                           :w (cl-transforms:w orientation)))))))))
         (with-fields (valid) result
           valid)))))

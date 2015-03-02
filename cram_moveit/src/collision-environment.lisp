@@ -154,7 +154,7 @@ bridge.")
     (unless (or primitive-shapes mesh-shapes plane-shapes)
       (cpl:fail 'no-collision-shapes-defined))
     (flet* ((resolve-pose (pose-msg)
-              (or pose-msg (tf:pose->msg pose-stamped)))
+                          (or pose-msg (cl-tf2:to-msg pose-stamped)))
             (pose-present (object)
               (and (listp object) (cdr object)))
             (resolve-object (obj)
@@ -165,8 +165,8 @@ bridge.")
               (map 'vector #'resolve-pose (mapcar #'pose-present poses))))
       (let* ((obj-msg (roslisp:make-msg
                        "moveit_msgs/CollisionObject"
-                       (stamp header) (tf:stamp pose-stamped)
-                       (frame_id header) (tf:frame-id pose-stamped)
+                       (stamp header) (cl-tf-datatypes:stamp pose-stamped)
+                       (frame_id header) (cl-tf-datatypes:frame-id pose-stamped)
                        id name
                        operation (roslisp-msg-protocol:symbol-code
                                   'moveit_msgs-msg:collisionobject
@@ -286,11 +286,14 @@ bridge.")
             (mesh-shapes (slot-value col-obj 'mesh-shapes))
             (plane-shapes (slot-value col-obj 'plane-shapes)))
         (roslisp:ros-info (moveit) "Transforming link from ~a into ~a"
-                          (tf:frame-id current-pose-stamped)
+                          (cl-tf-datatypes:frame-id current-pose-stamped)
                           target-link)
         (let* ((pose-in-link
-                 (cl-tf2:ensure-pose-stamped-transformed
-                  *tf2* current-pose-stamped target-link
+                 (cl-tf2:transform-pose
+                  *tf2-buffer*
+                  :pose current-pose-stamped
+                  :target-frame target-link
+                  :timeout cram-roslisp-common:*tf-default-timeout*
                   :use-current-ros-time t))
                (obj-msg-plain (create-collision-object-message
                                name pose-in-link
@@ -342,18 +345,20 @@ bridge.")
             (mesh-shapes (slot-value col-obj 'mesh-shapes))
             (plane-shapes (slot-value col-obj 'plane-shapes))
             (time (roslisp:ros-time)))
-        (unless (tf:wait-for-transform
-                 *tf*
-                 :timeout 5.0
-                 :time time
-                 :source-frame (tf:frame-id current-pose-stamped)
-                 :target-frame target-link)
-          (cpl:fail 'pose-not-transformable-into-link))
-        (let* ((pose-in-link (cl-tf2:ensure-pose-stamped-transformed
-                              *tf2* (tf:copy-pose-stamped
+        ;; (unless (cl-tf:wait-for-transform
+        ;;          *tf*
+        ;;          :timeout 5.0
+        ;;          :time time
+        ;;          :source-frame (cl-tf-datatypes:frame-id current-pose-stamped)
+        ;;          :target-frame target-link)
+        ;;   (cpl:fail 'pose-not-transformable-into-link))
+        (let* ((pose-in-link (cl-tf2:transform-pose
+                              *tf2-buffer*
+                              :pose (cl-tf-datatypes:copy-pose-stamped
                                      current-pose-stamped
                                      :stamp time)
-                              target-link :use-current-ros-time t))
+                              :target-frame target-link
+                              :timeout cram-roslisp-common:*tf-default-timeout*))
                (obj-msg-plain (create-collision-object-message
                                name pose-in-link
                                :primitive-shapes primitive-shapes
@@ -386,4 +391,4 @@ bridge.")
           (roslisp:ros-info
            (moveit)
            "Detaching collision object `~a' from link `~a'."
-           name (tf:frame-id current-pose-stamped)))))))
+           name (cl-tf-datatypes:frame-id current-pose-stamped)))))))

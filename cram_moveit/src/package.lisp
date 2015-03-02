@@ -99,7 +99,7 @@
    ;; Display
    display-robot-state
    set-object-color)
-  (:import-from cram-roslisp-common *tf2*)
+  (:import-from cram-roslisp-common *tf2-buffer*)
   (:desig-properties #:shape #:dimensions #:box #:cylinder
                      #:sphere #:cone #:round #:name #:yellow
                      #:color))

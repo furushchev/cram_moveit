@@ -34,40 +34,49 @@
      (stamp header) stamp
      (frame_id header) child-frame-id;frame-id
      (child_frame_id) frame-id;child-frame-id
-     (x translation transform) (tf:x translation)
-     (y translation transform) (tf:y translation)
-     (z translation transform) (tf:z translation)
-     (x rotation transform) (tf:x rotation)
-     (y rotation transform) (tf:y rotation)
-     (z rotation transform) (tf:z rotation)
-     (w rotation transform) (tf:w rotation))))
+     (x translation transform) (cl-transforms:x translation)
+     (y translation transform) (cl-transforms:y translation)
+     (z translation transform) (cl-transforms:z translation)
+     (x rotation transform) (cl-transforms:x rotation)
+     (y rotation transform) (cl-transforms:y rotation)
+     (z rotation transform) (cl-transforms:z rotation)
+     (w rotation transform) (cl-transforms:w rotation))))
 
 (defun transform->msg (transform)
   (with-fields (rotation translation) transform
     (make-message
      "geometry_msgs/Transform"
-     (x translation) (tf:x translation)
-     (y translation) (tf:y translation)
-     (z translation) (tf:z translation)
-     (x rotation) (tf:x rotation)
-     (y rotation) (tf:y rotation)
-     (z rotation) (tf:z rotation)
-     (w rotation) (tf:w rotation))))
+     (x translation) (cl-transforms:x translation)
+     (y translation) (cl-transforms:y translation)
+     (z translation) (cl-transforms:z translation)
+     (x rotation) (cl-transforms:x rotation)
+     (y rotation) (cl-transforms:y rotation)
+     (z rotation) (cl-transforms:z rotation)
+     (w rotation) (cl-transforms:w rotation))))
 
 (defun pose-distance (link-frame pose-stamped)
   "Returns the distance of stamped pose `pose-stamped' from the origin
 coordinates of link `link-frame'. This can be for example used for
 checking how far away a given grasp pose is from the gripper frame."
-  (tf:v-dist (tf:make-identity-vector)
-             (tf:origin (cl-tf2:ensure-pose-stamped-transformed
-                         *tf2* pose-stamped link-frame :use-current-ros-time t))))
+  (cl-transforms:v-dist (cl-transforms:make-identity-vector)
+                        (cl-transforms:origin
+                         (cl-tf2:transform-pose
+                          *tf2-buffer*
+                          :pose pose-stamped
+                          :target-frame link-frame
+                          :timeout cram-roslisp-common:*tf-default-timeout*
+                          :use-current-ros-time t))))
 
 (defun motion-length (link-name planning-group pose-stamped
                         &key allowed-collision-objects
                           highlight-links)
   (let* ((pose-stamped-transformed
-           (cl-tf2:ensure-pose-stamped-transformed
-            *tf2* pose-stamped "/torso_lift_link" :use-current-ros-time t))
+           (cl-tf2:transform-pose
+            *tf2-buffer*
+            :pose pose-stamped
+            :target-frame "torso_lift_link"
+            :timeout cram-roslisp-common:*tf-default-timeout*
+            :use-current-ros-time t))
          (state-0 (moveit:plan-link-movement
                    link-name planning-group
                    pose-stamped-transformed
