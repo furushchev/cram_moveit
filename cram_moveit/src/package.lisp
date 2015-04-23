@@ -41,7 +41,8 @@
   #:desig
   #:designators-ros
   #:roslisp
-  #:cram-plan-failures)
+  #:cram-plan-failures
+  #:cl-transforms-stamped)
   (:export
    ;; Functions
    move-link-pose

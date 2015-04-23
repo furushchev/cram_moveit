@@ -109,10 +109,10 @@ MoveIt! framework and registers known conditions."
                                          (t `(,link-name))))
                        (poses-stamped (mapcar
                                        (lambda (pose-stamped)
-                                         (cl-tf-datatypes:pose->pose-stamped
+                                         (pose->pose-stamped
                                           (cl-tf2:unslash-frame
-                                           (cl-tf-datatypes:frame-id pose-stamped))
-                                          (cl-tf-datatypes:stamp pose-stamped)
+                                           (frame-id pose-stamped))
+                                          (stamp pose-stamped)
                                           pose-stamped))
                                        (cond ((listp pose-stamped) pose-stamped)
                                              (t `(,pose-stamped)))))
@@ -124,7 +124,7 @@ MoveIt! framework and registers known conditions."
                                        reference-frame)
                                       (t `(,reference-frame))))
                                (poses-stamped
-                                (list (cl-tf-datatypes:frame-id (car poses-stamped)))))))
+                                (list (frame-id (car poses-stamped)))))))
                   (let* ((mpreq (make-message
                                  "moveit_msgs/MotionPlanRequest"
                                  :group_name planning-group
@@ -585,8 +585,8 @@ as only the final configuration IK is generated."
             :link_name link-name
             :header (make-message
                      "std_msgs/Header"
-                     :frame_id (cl-tf-datatypes:frame-id pose-stamped)
-                     :stamp (cl-tf-datatypes:stamp pose-stamped))
+                     :frame_id (frame-id pose-stamped)
+                     :stamp (stamp pose-stamped))
             :constraint_region
             (make-message
              "moveit_msgs/BoundingVolume"
@@ -605,8 +605,8 @@ as only the final configuration IK is generated."
             :link_name link-name
             :header (make-message
                      "std_msgs/Header"
-                     :frame_id (cl-tf-datatypes:frame-id pose-stamped)
-                     :stamp (cl-tf-datatypes:stamp pose-stamped))
+                     :frame_id (frame-id pose-stamped)
+                     :stamp (stamp pose-stamped))
             :orientation
             (make-message
              "geometry_msgs/Quaternion"
@@ -654,7 +654,7 @@ as only the final configuration IK is generated."
   (with-lock-held (*moveit-pose-validity-check-lock*)
     (let* ((pose-stamped-oc (cl-tf2:transform-pose
                              *tf2-buffer*
-                             :pose (cl-tf-datatypes:copy-pose-stamped
+                             :pose (copy-pose-stamped
                                     pose-stamped
                                     :stamp (roslisp:ros-time)) ; <- use current time
                              :target-frame designators-ros:*odom-frame*
@@ -678,7 +678,7 @@ as only the final configuration IK is generated."
                  (make-message
                   "std_msgs/Header"
                   :frame_id (concatenate 'string "/"
-                                         (cl-tf-datatypes:frame-id pose-stamped-oc)))
+                                         (frame-id pose-stamped-oc)))
                  :joint_names (vector "virtual_joint")
                  :joint_transforms
                  (vector (make-message

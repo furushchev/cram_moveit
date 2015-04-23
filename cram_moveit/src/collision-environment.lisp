@@ -165,8 +165,8 @@ bridge.")
               (map 'vector #'resolve-pose (mapcar #'pose-present poses))))
       (let* ((obj-msg (roslisp:make-msg
                        "moveit_msgs/CollisionObject"
-                       (stamp header) (cl-tf-datatypes:stamp pose-stamped)
-                       (frame_id header) (cl-tf-datatypes:frame-id pose-stamped)
+                       (stamp header) (stamp pose-stamped)
+                       (frame_id header) (frame-id pose-stamped)
                        id name
                        operation (roslisp-msg-protocol:symbol-code
                                   'moveit_msgs-msg:collisionobject
@@ -286,7 +286,7 @@ bridge.")
             (mesh-shapes (slot-value col-obj 'mesh-shapes))
             (plane-shapes (slot-value col-obj 'plane-shapes)))
         (roslisp:ros-info (moveit) "Transforming link from ~a into ~a"
-                          (cl-tf-datatypes:frame-id current-pose-stamped)
+                          (frame-id current-pose-stamped)
                           target-link)
         (let* ((pose-in-link
                  (cl-tf2:transform-pose
@@ -349,12 +349,12 @@ bridge.")
         ;;          *tf*
         ;;          :timeout 5.0
         ;;          :time time
-        ;;          :source-frame (cl-tf-datatypes:frame-id current-pose-stamped)
+        ;;          :source-frame (frame-id current-pose-stamped)
         ;;          :target-frame target-link)
         ;;   (cpl:fail 'pose-not-transformable-into-link))
         (let* ((pose-in-link (cl-tf2:transform-pose
                               *tf2-buffer*
-                              :pose (cl-tf-datatypes:copy-pose-stamped
+                              :pose (copy-pose-stamped
                                      current-pose-stamped
                                      :stamp time)
                               :target-frame target-link
@@ -391,4 +391,4 @@ bridge.")
           (roslisp:ros-info
            (moveit)
            "Detaching collision object `~a' from link `~a'."
-           name (cl-tf-datatypes:frame-id current-pose-stamped)))))))
+           name (frame-id current-pose-stamped)))))))
