@@ -652,7 +652,7 @@ as only the final configuration IK is generated."
 
 (defun check-base-pose-validity (pose-stamped)
   (with-lock-held (*moveit-pose-validity-check-lock*)
-    (let* ((pose-stamped-oc (cl-tf2:transform-pose
+    (let* ((pose-stamped-oc (cl-transforms-stamped:transform-pose-stamped
                              *tf2-buffer*
                              :pose (copy-pose-stamped
                                     pose-stamped

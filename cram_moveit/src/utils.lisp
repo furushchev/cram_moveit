@@ -60,7 +60,7 @@ coordinates of link `link-frame'. This can be for example used for
 checking how far away a given grasp pose is from the gripper frame."
   (cl-transforms:v-dist (cl-transforms:make-identity-vector)
                         (cl-transforms:origin
-                         (cl-tf2:transform-pose
+                         (cl-transforms-stamped:transform-pose-stamped
                           *tf2-buffer*
                           :pose pose-stamped
                           :target-frame link-frame
@@ -71,7 +71,7 @@ checking how far away a given grasp pose is from the gripper frame."
                         &key allowed-collision-objects
                           highlight-links)
   (let* ((pose-stamped-transformed
-           (cl-tf2:transform-pose
+           (cl-transforms-stamped:transform-pose-stamped
             *tf2-buffer*
             :pose pose-stamped
             :target-frame "torso_lift_link"

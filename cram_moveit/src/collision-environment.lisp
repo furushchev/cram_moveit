@@ -289,7 +289,7 @@ bridge.")
                           (frame-id current-pose-stamped)
                           target-link)
         (let* ((pose-in-link
-                 (cl-tf2:transform-pose
+                 (cl-transforms-stamped:transform-pose-stamped
                   *tf2-buffer*
                   :pose current-pose-stamped
                   :target-frame target-link
@@ -352,7 +352,7 @@ bridge.")
         ;;          :source-frame (frame-id current-pose-stamped)
         ;;          :target-frame target-link)
         ;;   (cpl:fail 'pose-not-transformable-into-link))
-        (let* ((pose-in-link (cl-tf2:transform-pose
+        (let* ((pose-in-link (cl-transforms-stamped:transform-pose-stamped
                               *tf2-buffer*
                               :pose (copy-pose-stamped
                                      current-pose-stamped
