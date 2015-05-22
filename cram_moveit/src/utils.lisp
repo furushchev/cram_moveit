@@ -61,7 +61,7 @@ checking how far away a given grasp pose is from the gripper frame."
   (cl-transforms:v-dist (cl-transforms:make-identity-vector)
                         (cl-transforms:origin
                          (cl-transforms-stamped:transform-pose-stamped
-                          *tf2-buffer*
+                          *transformer*
                           :pose pose-stamped
                           :target-frame link-frame
                           :timeout cram-roslisp-common:*tf-default-timeout*
@@ -72,7 +72,7 @@ checking how far away a given grasp pose is from the gripper frame."
                           highlight-links)
   (let* ((pose-stamped-transformed
            (cl-transforms-stamped:transform-pose-stamped
-            *tf2-buffer*
+            *transformer*
             :pose pose-stamped
             :target-frame "torso_lift_link"
             :timeout cram-roslisp-common:*tf-default-timeout*

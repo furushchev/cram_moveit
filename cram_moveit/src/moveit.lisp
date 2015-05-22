@@ -479,7 +479,7 @@ success, and `nil' otherwise."
                   "moveit_msgs/PositionIKRequest"
                   :group_name planning-group
                   :ik_link_names (vector link-name)
-                  :pose_stamped_vector (vector (cl-tf2:to-msg pose-stamped))
+                  :pose_stamped_vector (vector (to-msg pose-stamped))
                   :robot_state (or robot-state
                                    (make-message "moveit_msgs/RobotState"))))))
     (roslisp:with-fields (solution error_code) result
@@ -596,7 +596,7 @@ as only the final configuration IK is generated."
                            :type (roslisp-msg-protocol:symbol-code
                                   'shape_msgs-msg:solidprimitive :sphere)
                            :dimensions (vector tolerance-radius)))
-             :primitive_poses (vector (cl-tf2:to-msg pose-stamped)))))
+             :primitive_poses (vector (to-msg pose-stamped)))))
           :orientation_constraints
           (vector
            (make-message
@@ -653,7 +653,7 @@ as only the final configuration IK is generated."
 (defun check-base-pose-validity (pose-stamped)
   (with-lock-held (*moveit-pose-validity-check-lock*)
     (let* ((pose-stamped-oc (cl-transforms-stamped:transform-pose-stamped
-                             *tf2-buffer*
+                             *transformer*
                              :pose (copy-pose-stamped
                                     pose-stamped
                                     :stamp (roslisp:ros-time)) ; <- use current time
@@ -662,7 +662,7 @@ as only the final configuration IK is generated."
            (origin (cl-transforms:origin pose-stamped-oc))
            (orientation (cl-transforms:orientation pose-stamped-oc)))
       (let ((adv (roslisp:advertise "/dhdhdh" "geometry_msgs/PoseStamped")))
-        (roslisp:publish adv (cl-tf2:to-msg pose-stamped-oc)))
+        (roslisp:publish adv (to-msg pose-stamped-oc)))
       (let ((result
               (roslisp:call-service
                "/check_state_validity"

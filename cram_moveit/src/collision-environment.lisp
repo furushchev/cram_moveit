@@ -154,7 +154,7 @@ bridge.")
     (unless (or primitive-shapes mesh-shapes plane-shapes)
       (cpl:fail 'no-collision-shapes-defined))
     (flet* ((resolve-pose (pose-msg)
-                          (or pose-msg (cl-tf2:to-msg pose-stamped)))
+                          (or pose-msg (to-msg pose-stamped)))
             (pose-present (object)
               (and (listp object) (cdr object)))
             (resolve-object (obj)
@@ -290,7 +290,7 @@ bridge.")
                           target-link)
         (let* ((pose-in-link
                  (cl-transforms-stamped:transform-pose-stamped
-                  *tf2-buffer*
+                  *transformer*
                   :pose current-pose-stamped
                   :target-frame target-link
                   :timeout cram-roslisp-common:*tf-default-timeout*
@@ -353,7 +353,7 @@ bridge.")
         ;;          :target-frame target-link)
         ;;   (cpl:fail 'pose-not-transformable-into-link))
         (let* ((pose-in-link (cl-transforms-stamped:transform-pose-stamped
-                              *tf2-buffer*
+                              *transformer*
                               :pose (copy-pose-stamped
                                      current-pose-stamped
                                      :stamp time)
