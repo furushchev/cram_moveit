@@ -55,30 +55,33 @@
 
 (define-hook cram-language::on-publishing-collision-object (obj obj-name))
 
+(defun publish-semantic-map-collision-object (obj)
+  (with-slots (pose dimensions) obj
+    (let* ((obj-name (string-upcase (make-collision-obj-name obj)))
+           (pose-stamped (cl-transforms-stamped:transform-pose-stamped
+                          *transformer*
+                          :pose (pose->pose-stamped *fixed-frame* 0.0 pose)
+                          :target-frame *odom-frame*
+                          :timeout *tf-default-timeout*)))
+      (moveit:register-collision-object
+       obj-name
+       :primitive-shapes (list (roslisp:make-msg
+                                "shape_msgs/SolidPrimitive"
+                                type 1
+                                dimensions (vector
+                                            (x dimensions)
+                                            (y dimensions)
+                                            (z dimensions))))
+       :pose-stamped pose-stamped)
+      (moveit:add-collision-object obj-name nil)
+      (cram-language::on-publishing-collision-object obj obj-name))))
+
 (defun publish-semantic-map-collision-objects ()
   (unless (> (hash-table-count *semantic-map-obj-cache*) 0)
     (init-semantic-map-obj-cache))
   (loop for objs being the hash-values of *semantic-map-obj-cache* do
     (dolist (obj objs)
-      (with-slots (pose dimensions) obj
-        (let* ((obj-name (string-upcase (make-collision-obj-name obj)))
-               (pose-stamped (cl-transforms-stamped:transform-pose-stamped
-                              *transformer*
-                              :pose (pose->pose-stamped *fixed-frame* 0.0 pose)
-                              :target-frame *odom-frame*
-                              :timeout *tf-default-timeout*)))
-            (moveit:register-collision-object
-             obj-name
-             :primitive-shapes (list (roslisp:make-msg
-                                      "shape_msgs/SolidPrimitive"
-                                      type 1
-                                      dimensions (vector
-                                                  (x dimensions)
-                                                  (y dimensions)
-                                                  (z dimensions))))
-             :pose-stamped pose-stamped)
-            (moveit:add-collision-object obj-name nil)
-            (cram-language::on-publishing-collision-object obj obj-name))))))
+      (publish-semantic-map-collision-object obj))))
 
 (defun remove-semantic-map-collision-objects ()
   (unless (> (hash-table-count *semantic-map-obj-cache*) 0)
