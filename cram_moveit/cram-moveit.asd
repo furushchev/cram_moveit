@@ -36,7 +36,7 @@
                process-modules
                cram-utilities
                cram-plan-knowledge
-               designators
+               cram-designators
                designators-ros
                actionlib-lisp
                std_msgs-msg
