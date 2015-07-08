@@ -33,7 +33,7 @@
   :depends-on (cram-roslisp-common
                cram-language
                cram-reasoning
-               process-modules
+               cram-process-modules
                cram-utilities
                cram-plan-knowledge
                cram-designators
