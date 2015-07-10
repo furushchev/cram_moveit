@@ -34,9 +34,9 @@
  (:use
   #:common-lisp
   #:cram-roslisp-common
-  #:cram-reasoning
+  #:cram-prolog
   #:cram-process-modules
-  #:crs
+  #:prolog
   #:cut
   #:desig
   #:designators-ros
