@@ -64,10 +64,9 @@
         (let* ((obj-name (string-upcase (make-collision-obj-name obj)))
                (pose-stamped (cl-transforms-stamped:transform-pose-stamped
                               *transformer*
-                              :pose (pose->pose-stamped
-                                     designators-ros:*fixed-frame* 0.0 pose)
-                              :target-frame designators-ros:*odom-frame*
-                              :timeout cram-roslisp-common:*tf-default-timeout*)))
+                              :pose (pose->pose-stamped *fixed-frame* 0.0 pose)
+                              :target-frame *odom-frame*
+                              :timeout *tf-default-timeout*)))
             (moveit:register-collision-object
              obj-name
              :primitive-shapes (list (roslisp:make-msg

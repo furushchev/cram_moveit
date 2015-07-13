@@ -37,5 +37,4 @@
            publish-semantic-map-collision-objects
            publish-semantic-map-markers
            remove-semantic-map-collision-objects
-           update-sem-map-obj-pose)
-  (:import-from cram-roslisp-common *transformer*))
+           update-sem-map-obj-pose))

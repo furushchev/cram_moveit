@@ -657,8 +657,8 @@ as only the final configuration IK is generated."
                              :pose (copy-pose-stamped
                                     pose-stamped
                                     :stamp (roslisp:ros-time)) ; <- use current time
-                             :target-frame designators-ros:*odom-frame*
-                             :timeout cram-roslisp-common:*tf-default-timeout*))
+                             :target-frame *odom-frame*
+                             :timeout *tf-default-timeout*))
            (origin (cl-transforms:origin pose-stamped-oc))
            (orientation (cl-transforms:orientation pose-stamped-oc)))
       (let ((adv (roslisp:advertise "/dhdhdh" "geometry_msgs/PoseStamped")))
