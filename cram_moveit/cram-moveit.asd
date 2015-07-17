@@ -35,7 +35,6 @@
                cram-prolog
                cram-process-modules
                cram-utilities
-               cram-plan-knowledge
                cram-designators
                designators-ros
                actionlib-lisp
