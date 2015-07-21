@@ -39,7 +39,7 @@
   #:prolog
   #:cut
   #:desig
-  #:designators-ros
+  #:cram-transforms-stamped
   #:roslisp
   #:cram-plan-failures
   #:cl-transforms-stamped)

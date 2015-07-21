@@ -36,7 +36,7 @@
                cram-process-modules
                cram-utilities
                cram-designators
-               designators-ros
+               cram-transforms-stamped
                actionlib-lisp
                std_msgs-msg
                cram-plan-failures
