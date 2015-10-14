@@ -33,7 +33,6 @@
  (:nicknames :moveit)
  (:use
   #:common-lisp
-  #:cram-roslisp-common
   #:cram-prolog
   #:cram-process-modules
   #:prolog

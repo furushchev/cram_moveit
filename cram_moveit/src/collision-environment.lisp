@@ -293,7 +293,7 @@ bridge.")
                   *transformer*
                   :pose current-pose-stamped
                   :target-frame target-link
-                  :timeout cram-roslisp-common:*tf-default-timeout*
+                  :timeout *tf-default-timeout*
                   :use-current-ros-time t))
                (obj-msg-plain (create-collision-object-message
                                name pose-in-link
@@ -358,7 +358,7 @@ bridge.")
                                      current-pose-stamped
                                      :stamp time)
                               :target-frame target-link
-                              :timeout cram-roslisp-common:*tf-default-timeout*))
+                              :timeout *tf-default-timeout*))
                (obj-msg-plain (create-collision-object-message
                                name pose-in-link
                                :primitive-shapes primitive-shapes

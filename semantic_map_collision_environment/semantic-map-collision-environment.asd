@@ -39,7 +39,7 @@
                cram-prolog
                cram-utilities
                roslisp-utilities
-               cram-roslisp-common
+               cram-transforms-stamped
                visualization_msgs-msg
                cram-moveit
                cram-semantic-map-utils)

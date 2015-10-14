@@ -64,7 +64,7 @@ checking how far away a given grasp pose is from the gripper frame."
                           *transformer*
                           :pose pose-stamped
                           :target-frame link-frame
-                          :timeout cram-roslisp-common:*tf-default-timeout*
+                          :timeout *tf-default-timeout*
                           :use-current-ros-time t))))
 
 (defun motion-length (link-name planning-group pose-stamped
@@ -75,7 +75,7 @@ checking how far away a given grasp pose is from the gripper frame."
             *transformer*
             :pose pose-stamped
             :target-frame "torso_lift_link"
-            :timeout cram-roslisp-common:*tf-default-timeout*
+            :timeout *tf-default-timeout*
             :use-current-ros-time t))
          (state-0 (moveit:plan-link-movement
                    link-name planning-group

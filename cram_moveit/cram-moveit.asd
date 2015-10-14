@@ -30,8 +30,7 @@
   :license "BSD"
   :description "CRAM MoveIt! Interface"
 
-  :depends-on (cram-roslisp-common
-               cram-language
+  :depends-on (cram-language
                cram-prolog
                cram-process-modules
                cram-utilities
