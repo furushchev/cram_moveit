@@ -27,8 +27,7 @@
 
 (in-package :cl-user)
 
-(desig-props:def-desig-package
- cram-moveit
+(defpackage cram-moveit
  (:documentation "CRAM MoveIt! Interface")
  (:nicknames :moveit)
  (:use
@@ -98,7 +97,4 @@
    execute-trajectories
    ;; Display
    display-robot-state
-   set-object-color)
-  (:desig-properties #:shape #:dimensions #:box #:cylinder
-                     #:sphere #:cone #:round #:name #:yellow
-                     #:color))
+   set-object-color))

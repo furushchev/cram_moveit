@@ -74,7 +74,7 @@ checking how far away a given grasp pose is from the gripper frame."
            (cl-transforms-stamped:transform-pose-stamped
             *transformer*
             :pose pose-stamped
-            :target-frame *robot-torso-link*
+            :target-frame *robot-torso-frame*
             :timeout *tf-default-timeout*
             :use-current-ros-time t))
          (state-0 (moveit:plan-link-movement

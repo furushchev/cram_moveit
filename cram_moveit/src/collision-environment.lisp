@@ -51,6 +51,42 @@
   "List of collision object instances registered with the CRAM/MoveIt!
 bridge.")
 
+(defun add-collision-object (name &optional pose-stamped
+                                    (fixed-map-odomcombined nil))
+  (let* ((name (string name))
+         (col-obj (named-collision-object name))
+         (pose-stamped (or pose-stamped
+                           (collision-object-pose name))))
+    (when (and col-obj pose-stamped)
+      (setf (slot-value col-obj 'pose) pose-stamped)
+      (let ((primitive-shapes (slot-value col-obj 'primitive-shapes))
+            (mesh-shapes (slot-value col-obj 'mesh-shapes))
+            (plane-shapes (slot-value col-obj 'plane-shapes))
+            (color (slot-value col-obj 'color)))
+        (declare (ignorable color))
+        (let* ((obj-msg (roslisp:modify-message-copy
+                         (create-collision-object-message
+                          name pose-stamped
+                          :primitive-shapes primitive-shapes
+                          :mesh-shapes mesh-shapes
+                          :plane-shapes plane-shapes)
+                         operation (roslisp-msg-protocol:symbol-code
+                                    'moveit_msgs-msg:collisionobject
+                                    :add)))
+               (world-msg (roslisp:make-msg
+                           "moveit_msgs/PlanningSceneWorld"
+                           collision_objects (vector obj-msg)))
+               (scene-msg (roslisp:make-msg
+                           "moveit_msgs/PlanningScene"
+                           world world-msg
+                           ;object_colors (vector (make-object-color name color))
+                           is_diff t)))
+          (prog1 (roslisp:publish *planning-scene-publisher* scene-msg)
+            (roslisp:ros-info
+             (moveit)
+             "Added `~a' to environment server." name)
+            (publish-object-colors)))))))
+
 (defgeneric register-collision-object (object &rest rest))
 
 (defmethod register-collision-object ((object object-designator)
@@ -59,29 +95,21 @@ bridge.")
            (let ((symbol (or symbol :box)))
              (roslisp-msg-protocol:symbol-code
               'shape_msgs-msg:solidprimitive symbol))))
-    (let* ((name (string-upcase (string (desig-prop-value
-                                         object 'desig-props:name))))
-           (shape-prop (or (desig-prop-value object 'desig-props:shape)
-                           'desig-props:box))
-           (shape (primitive-code
-                   (case shape-prop
-                     (desig-props:box :box)
-                     (desig-props:sphere :sphere)
-                     (desig-props:cylinder :cylinder)
-                     (desig-props:round :cylinder)
-                     (desig-props:cone :cone))))
+    (let* ((name (string-upcase (string (desig-prop-value object :name))))
+           (shape-prop (or (desig-prop-value object :shape) :box))
+           (shape (primitive-code shape-prop))
            (dimensions (or
-                        (desig-prop-value object 'desig-props:dimensions)
+                        (desig-prop-value object :dimensions)
                         (case shape-prop
-                          (desig-props:box (vector 0.1 0.1 0.1))
-                          (desig-props:sphere (vector 0.1 0.1))
-                          (desig-props:cylinder (vector 0.2 0.03))
-                          (desig-props:round (vector 0.2 0.08))
-                          (desig-props:cone (vector 0.1 0.1)))))
+                          (:box (vector 0.1 0.1 0.1))
+                          (:sphere (vector 0.1 0.1))
+                          (:cylinder (vector 0.2 0.03))
+                          (:round (vector 0.2 0.08))
+                          (:cone (vector 0.1 0.1)))))
            (pose-stamped
              (or pose-stamped
-                 (when (desig-prop-value object 'desig-props:at)
-                   (reference (desig-prop-value object 'desig-props:at))))))
+                 (when (desig-prop-value object :at)
+                   (reference (desig-prop-value object :at))))))
       (unless pose-stamped
         (roslisp:ros-warn (moveit) "No pose-stamped given (neither manually nor in the object-designator) when adding object-designator ~a to the collision environment." object))
       (register-collision-object
@@ -90,12 +118,12 @@ bridge.")
                                 "shape_msgs/SolidPrimitive"
                                 type shape
                                 dimensions
-                                (cond ((eql shape-prop 'desig-props:round)
+                                (cond ((eql shape-prop :round)
                                        (vector (elt dimensions 2)
                                                (/ (elt dimensions 1) 2)))
                                       (t dimensions))))
        :pose-stamped pose-stamped
-       :color (desig-prop-value object 'desig-props:color))
+       :color (desig-prop-value object :color))
       (when add
         (add-collision-object name pose-stamped t)))))
 
@@ -180,13 +208,13 @@ bridge.")
         obj-msg))))
 
 (defun make-object-color (id color)
-  (let ((col-vec (case (intern (string-upcase (string color)) 'desig-props)
-                   (blue (vector 0.0 0.0 1.0))
-                   (red (vector 1.0 0.0 0.0))
-                   (green (vector 0.0 1.0 0.0))
-                   (yellow (vector 1.0 1.0 0.0))
-                   (black (vector 0.0 0.0 0.0))
-                   (white (vector 1.0 1.0 1.0))
+  (let ((col-vec (case (intern (string-upcase (string color)) :keyword)
+                   (:blue (vector 0.0 0.0 1.0))
+                   (:red (vector 1.0 0.0 0.0))
+                   (:green (vector 0.0 1.0 0.0))
+                   (:yellow (vector 1.0 1.0 0.0))
+                   (:black (vector 0.0 0.0 0.0))
+                   (:white (vector 1.0 1.0 1.0))
                    (t (vector 1.0 0.0 1.0)))))
     (roslisp:make-message
      "moveit_msgs/ObjectColor"
@@ -195,42 +223,6 @@ bridge.")
      (g color) (elt col-vec 1)
      (b color) (elt col-vec 2)
      (a color) 1.0)))
-
-(defun add-collision-object (name &optional pose-stamped
-                                    (fixed-map-odomcombined nil))
-  (let* ((name (string name))
-         (col-obj (named-collision-object name))
-         (pose-stamped (or pose-stamped
-                           (collision-object-pose name))))
-    (when (and col-obj pose-stamped)
-      (setf (slot-value col-obj 'pose) pose-stamped)
-      (let ((primitive-shapes (slot-value col-obj 'primitive-shapes))
-            (mesh-shapes (slot-value col-obj 'mesh-shapes))
-            (plane-shapes (slot-value col-obj 'plane-shapes))
-            (color (slot-value col-obj 'color)))
-        (declare (ignorable color))
-        (let* ((obj-msg (roslisp:modify-message-copy
-                         (create-collision-object-message
-                          name pose-stamped
-                          :primitive-shapes primitive-shapes
-                          :mesh-shapes mesh-shapes
-                          :plane-shapes plane-shapes)
-                         operation (roslisp-msg-protocol:symbol-code
-                                    'moveit_msgs-msg:collisionobject
-                                    :add)))
-               (world-msg (roslisp:make-msg
-                           "moveit_msgs/PlanningSceneWorld"
-                           collision_objects (vector obj-msg)))
-               (scene-msg (roslisp:make-msg
-                           "moveit_msgs/PlanningScene"
-                           world world-msg
-                           ;object_colors (vector (make-object-color name color))
-                           is_diff t)))
-          (prog1 (roslisp:publish *planning-scene-publisher* scene-msg)
-            (roslisp:ros-info
-             (moveit)
-             "Added `~a' to environment server." name)
-            (publish-object-colors)))))))
 
 (defun remove-collision-object (name)
   (let* ((name (string name))
