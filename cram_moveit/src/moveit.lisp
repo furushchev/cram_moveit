@@ -170,7 +170,7 @@ MoveIt! framework and registers known conditions."
                            (declare (ignore f))
                            (ros-warn (moveit) "Invalid motion plan. Rethrowing as failed manipulation attempt.")
                            (error 'manipulation-failed)))
-                      (roslisp:with-fields (error_code
+			(roslisp:with-fields (error_code
                                             trajectory_start
                                             planned_trajectory)
                           (send-action *move-group-action-client*
@@ -571,6 +571,12 @@ as only the final configuration IK is generated."
             :weight 1.0))
          names positions))))
 
+(defun convert-pose-stamped-to-pose (pose-stamped)
+    (cl-transforms:make-pose 
+      (cl-transforms:origin pose-stamped) 
+      (cl-transforms:orientation pose-stamped))
+)
+
 (defun make-pose-goal-constraints (link-names poses-stamped
                                    &key (tolerance-radius 0.01))
   (map 'vector
@@ -596,7 +602,7 @@ as only the final configuration IK is generated."
                            :type (roslisp-msg-protocol:symbol-code
                                   'shape_msgs-msg:solidprimitive :sphere)
                            :dimensions (vector tolerance-radius)))
-             :primitive_poses (vector (to-msg pose-stamped)))))
+             :primitive_poses (vector (to-msg (convert-pose-stamped-to-pose pose-stamped))))))
           :orientation_constraints
           (vector
            (make-message
