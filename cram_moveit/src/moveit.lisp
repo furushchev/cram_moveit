@@ -571,12 +571,6 @@ as only the final configuration IK is generated."
             :weight 1.0))
          names positions))))
 
-(defun convert-pose-stamped-to-pose (pose-stamped)
-    (cl-transforms:make-pose 
-      (cl-transforms:origin pose-stamped) 
-      (cl-transforms:orientation pose-stamped))
-)
-
 (defun make-pose-goal-constraints (link-names poses-stamped
                                    &key (tolerance-radius 0.01))
   (map 'vector
@@ -602,7 +596,8 @@ as only the final configuration IK is generated."
                            :type (roslisp-msg-protocol:symbol-code
                                   'shape_msgs-msg:solidprimitive :sphere)
                            :dimensions (vector tolerance-radius)))
-             :primitive_poses (vector (to-msg (convert-pose-stamped-to-pose pose-stamped))))))
+             :primitive_poses
+             (vector (to-msg (cl-transforms-stamped:pose-stamped->pose pose-stamped))))))
           :orientation_constraints
           (vector
            (make-message
