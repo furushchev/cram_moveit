@@ -39,6 +39,8 @@
                actionlib-lisp
                std_msgs-msg
                cram-plan-failures
+               cram-occasions-events
+               cram-plan-occasions-events
                moveit_msgs-msg
                moveit_msgs-srv
                roslisp-utilities
@@ -49,11 +51,11 @@
     ((:file "package")
      (:file "utils" :depends-on ("package"))
      (:file "failures" :depends-on ("package"))
-     (:file "ros" :depends-on ("package"))
      (:file "display" :depends-on ("package" "utils"))
      (:file "joint-states" :depends-on ("package"))
      (:file "planning-scene" :depends-on ("package"))
      (:file "collision-environment" :depends-on ("package" "utils" "display"))
+     (:file "ros" :depends-on ("package" "collision-environment"))
      (:file "moveit" :depends-on ("package"
                                   "failures"
                                   "collision-environment"

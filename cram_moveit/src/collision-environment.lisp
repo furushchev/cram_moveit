@@ -51,42 +51,6 @@
   "List of collision object instances registered with the CRAM/MoveIt!
 bridge.")
 
-(defun add-collision-object (name &optional pose-stamped
-                                    (fixed-map-odomcombined nil))
-  (let* ((name (string name))
-         (col-obj (named-collision-object name))
-         (pose-stamped (or pose-stamped
-                           (collision-object-pose name))))
-    (when (and col-obj pose-stamped)
-      (setf (slot-value col-obj 'pose) pose-stamped)
-      (let ((primitive-shapes (slot-value col-obj 'primitive-shapes))
-            (mesh-shapes (slot-value col-obj 'mesh-shapes))
-            (plane-shapes (slot-value col-obj 'plane-shapes))
-            (color (slot-value col-obj 'color)))
-        (declare (ignorable color))
-        (let* ((obj-msg (roslisp:modify-message-copy
-                         (create-collision-object-message
-                          name pose-stamped
-                          :primitive-shapes primitive-shapes
-                          :mesh-shapes mesh-shapes
-                          :plane-shapes plane-shapes)
-                         operation (roslisp-msg-protocol:symbol-code
-                                    'moveit_msgs-msg:collisionobject
-                                    :add)))
-               (world-msg (roslisp:make-msg
-                           "moveit_msgs/PlanningSceneWorld"
-                           collision_objects (vector obj-msg)))
-               (scene-msg (roslisp:make-msg
-                           "moveit_msgs/PlanningScene"
-                           world world-msg
-                           ;object_colors (vector (make-object-color name color))
-                           is_diff t)))
-          (prog1 (roslisp:publish *planning-scene-publisher* scene-msg)
-            (roslisp:ros-info
-             (moveit)
-             "Added `~a' to environment server." name)
-            (publish-object-colors)))))))
-
 (defgeneric register-collision-object (object &rest rest))
 
 (defmethod register-collision-object ((object object-designator)
@@ -99,11 +63,16 @@ bridge.")
            (shape-prop (or (desig-prop-value object :shape) :box))
            (shape (primitive-code shape-prop))
            (dimensions (or
-                        (desig-prop-value object :dimensions)
+                        (let ((obj-dim (desig-prop-value object :dimensions)))
+                          (when obj-dim
+                            (cond ((eql shape-prop :cylinder)
+                                   (vector (elt obj-dim 2)
+                                           (elt obj-dim 0)))
+                                  (t obj-dim))))
                         (case shape-prop
                           (:box (vector 0.1 0.1 0.1))
                           (:sphere (vector 0.1 0.1))
-                          (:cylinder (vector 0.2 0.03))
+                          (:cylinder (vector 0.03 0.2))
                           (:round (vector 0.2 0.08))
                           (:cone (vector 0.1 0.1)))))
            (pose-stamped
@@ -134,22 +103,24 @@ bridge.")
                                         plane-shapes
                                         pose-stamped
                                         color)
-  (let ((name (string-upcase (string name)))
-        (obj (or (named-collision-object name)
-                 (let ((obj-create
-                         (make-instance 'collision-object
-                                        :name name
-                                        :primitive-shapes primitive-shapes
-                                        :mesh-shapes mesh-shapes
-                                        :plane-shapes plane-shapes
-                                        :color color)))
-                   (push obj-create *known-collision-objects*)
-                   obj-create))))
+  (let* ((name (string-upcase (string name)))
+         (obj (or (let ((obj (named-collision-object name)))
+                    (when obj
+                      (setf (slot-value obj 'primitive-shapes) primitive-shapes))) 
+                  (let ((obj-create
+                          (make-instance 'collision-object
+                            :name name
+                            :primitive-shapes primitive-shapes
+                            :mesh-shapes mesh-shapes
+                            :plane-shapes plane-shapes
+                            :color color)))
+                    (push obj-create *known-collision-objects*)
+                    obj-create))))
     (when (and obj pose-stamped)
       (set-collision-object-pose name pose-stamped))))
 
 (defun unregister-collision-object (name)
-  (let ((name (string name)))
+  (let ((name (string-upcase (string name))))
     (setf *known-collision-objects*
           (remove name *known-collision-objects*
                   :test (lambda (name object)
@@ -159,7 +130,7 @@ bridge.")
   (let* ((name (string-upcase (string name)))
          (position (position name *known-collision-objects*
                              :test (lambda (name object)
-                                     (equal name (slot-value object 'name))))))
+                                     (string= name (slot-value object 'name))))))
     (when position
       (nth position *known-collision-objects*))))
 
@@ -224,8 +195,48 @@ bridge.")
      (b color) (elt col-vec 2)
      (a color) 1.0)))
 
+
+(defun republish-collision-environment ()
+  (loop for object in *known-collision-objects*
+        do (add-collision-object (slot-value object 'name) nil t)))
+
+(defun add-collision-object (name &optional pose-stamped quiet)
+  (when name
+    (let* ((name (string-upcase (string name)))
+           (col-obj (named-collision-object name))
+           (pose-stamped (or pose-stamped
+                             (slot-value col-obj 'pose))))
+      (when (and col-obj pose-stamped)
+        (setf (slot-value col-obj 'pose) pose-stamped)
+        (let ((primitive-shapes (slot-value col-obj 'primitive-shapes))
+              (mesh-shapes (slot-value col-obj 'mesh-shapes))
+              (plane-shapes (slot-value col-obj 'plane-shapes))
+              (color (slot-value col-obj 'color)))
+          (declare (ignorable color))
+          (let* ((obj-msg (roslisp:modify-message-copy
+                           (create-collision-object-message
+                            name pose-stamped
+                            :primitive-shapes primitive-shapes
+                            :mesh-shapes mesh-shapes
+                            :plane-shapes plane-shapes)
+                           operation (roslisp-msg-protocol:symbol-code
+                                      'moveit_msgs-msg:collisionobject
+                                      :add)))
+                 (world-msg (roslisp:make-msg
+                             "moveit_msgs/PlanningSceneWorld"
+                             collision_objects (vector obj-msg)))
+                 (scene-msg (roslisp:make-msg
+                             "moveit_msgs/PlanningScene"
+                             world world-msg
+                             ;;object_colors (vector (make-object-color name color))
+                             is_diff t)))
+            (prog1 (roslisp:publish *planning-scene-publisher* scene-msg)
+              (unless quiet
+                (roslisp:ros-info (moveit) "Added `~a' to environment server." name))
+              (publish-object-colors))))))))
+
 (defun remove-collision-object (name)
-  (let* ((name (string name))
+  (let* ((name (string-upcase (string name)))
          (col-obj (named-collision-object name)))
     (when col-obj
       (let* ((obj-msg (roslisp:make-msg
@@ -245,6 +256,25 @@ bridge.")
           (roslisp:ros-info
            (moveit)
            "Removed `~a' from environment server." name))))))
+
+(defun clear-all-moveit-collision-objects ()
+  (let* ((obj-msg (roslisp:make-msg
+                   "moveit_msgs/CollisionObject"
+                   id ""
+                   operation (roslisp-msg-protocol:symbol-code
+                              'moveit_msgs-msg:collisionobject
+                              :remove)))
+         (world-msg (roslisp:make-msg
+                     "moveit_msgs/PlanningSceneWorld"
+                     collision_objects (vector obj-msg)))
+         (scene-msg (roslisp:make-msg
+                     "moveit_msgs/PlanningScene"
+                     world world-msg
+                     is_diff t)))
+    (prog1 (roslisp:publish *planning-scene-publisher* scene-msg)
+      (roslisp:ros-info
+       (moveit)
+       "Removed every collision object from environment server."))))
 
 (defmacro without-collision-objects (object-names &body body)
   `(unwind-protect
@@ -269,7 +299,7 @@ bridge.")
 
 (defun attach-collision-object-to-link (name target-link
                                         &key current-pose-stamped touch-links)
-  (let* ((name (string name))
+  (let* ((name (string-upcase (string name)))
          (col-obj (named-collision-object name))
          (current-pose-stamped (or current-pose-stamped
                                    (collision-object-pose name))))
@@ -328,7 +358,7 @@ bridge.")
 
 (defun detach-collision-object-from-link (name target-link
                                           &key current-pose-stamped)
-  (let* ((name (string name))
+  (let* ((name (string-upcase (string name)))
          (col-obj (named-collision-object name))
          (current-pose-stamped (or current-pose-stamped
                                    (collision-object-pose name))))
@@ -384,3 +414,25 @@ bridge.")
            (moveit)
            "Detaching collision object `~a' from link `~a'."
            name (frame-id current-pose-stamped)))))))
+
+
+(defun detach-all-attachments ()
+  (let* ((planning-scene
+           (roslisp:call-service
+            "/get_planning_scene"
+            'moveit_msgs-srv:GetPlanningScene
+            :components (roslisp:make-message
+                         "moveit_msgs/PlanningSceneComponents"
+                         (components) 4)))
+         (attached-objects
+           (with-fields (scene) planning-scene
+             (with-fields (robot_state) scene
+               (with-fields (attached_collision_objects) robot_state
+                 (map 'list (lambda (attached-collision-object)
+                              (with-fields (link_name object) attached-collision-object
+                                (with-fields (id) object
+                                  `(,link_name ,id))))
+                      attached_collision_objects))))))
+    (loop for attached-object in attached-objects
+          do (destructuring-bind (link-name object-id) attached-object
+               (detach-collision-object-from-link object-id link-name)))))
