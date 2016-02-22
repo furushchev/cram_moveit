@@ -36,7 +36,7 @@
   #:cram-process-modules
   #:cut
   #:desig
-  #:cram-transforms-stamped
+  #:cram-tf
   #:roslisp
   #:cram-plan-failures
   #:cl-transforms-stamped)
