@@ -37,6 +37,7 @@
                cram-designators
                cram-tf
                actionlib-lisp
+               actionlib
                std_msgs-msg
                cram-plan-failures
                cram-occasions-events
