@@ -56,7 +56,7 @@
                    (make-instance 'sem-map-obj
                      :name name
                      :type type
-                     :pose (pl-matrix->pose ?pose)
+                     :pose (vecquat->pose ?pose)
                      :dimensions (apply #'make-3d-vector ?dim))))
                (json-prolog:prolog
                 `(and ("current_object_pose" ,name ?pose)
@@ -70,7 +70,7 @@
                      bdg
                    (make-box
                     name type
-                    (pl-matrix->pose ?pose)
+                    (vecquat->pose ?pose)
                     (apply #'make-3d-vector ?dim)
                     :top nil)))
                (json-prolog:prolog
@@ -86,7 +86,7 @@
                    (lazy-append
                     (make-box
                      name type
-                     (pl-matrix->pose ?pose)
+                     (vecquat->pose ?pose)
                      (apply #'make-3d-vector ?dim)
                      :front nil)
                     (query-physical-parts name))))
@@ -103,7 +103,7 @@
                    (lazy-append
                     (make-box
                      name type
-                     (pl-matrix->pose ?pose)
+                     (vecquat->pose ?pose)
                      (apply #'make-3d-vector ?dim)
                      :front nil)
                     (query-physical-parts name))))
@@ -120,7 +120,7 @@
                    (lazy-append
                     (make-box
                      name type
-                     (pl-matrix->pose ?pose)
+                     (vecquat->pose ?pose)
                      (apply #'make-3d-vector ?dim)
                      :front nil)
                     (query-physical-parts name))))
@@ -137,7 +137,7 @@
                    (lazy-append
                     (make-box
                      name type
-                     (pl-matrix->pose ?pose)
+                     (vecquat->pose ?pose)
                      (apply #'make-3d-vector ?dim)
                      :front nil)
                     (query-physical-parts name))))
@@ -154,7 +154,7 @@
                    (lazy-append
                     (make-box
                      name type
-                     (pl-matrix->pose ?pose)
+                     (vecquat->pose ?pose)
                      (apply #'make-3d-vector ?dim)
                      :front nil)
                     (query-physical-parts name))))
@@ -171,7 +171,7 @@
                    (lazy-append
                     (make-box
                      name type
-                     (pl-matrix->pose ?pose)
+                     (vecquat->pose ?pose)
                      (apply #'make-3d-vector ?dim)
                      :front nil)
                     (query-physical-parts name))))
@@ -188,7 +188,7 @@
                    (lazy-append
                     (make-box
                      name type
-                     (pl-matrix->pose ?pose)
+                     (vecquat->pose ?pose)
                      (apply #'make-3d-vector ?dim)
                      :front nil)
                     (query-physical-parts name))))
@@ -205,7 +205,7 @@
                    (lazy-append
                     (make-box
                      name type
-                     (pl-matrix->pose ?pose)
+                     (vecquat->pose ?pose)
                      (apply #'make-3d-vector ?dim)
                      :front nil)
                     (query-physical-parts name))))
@@ -223,7 +223,7 @@
                      :name name
                      :type type
                      :index 0
-                     :pose (pl-matrix->pose ?pose)
+                     :pose (vecquat->pose ?pose)
                      :dimensions (apply #'make-3d-vector ?dim))))
                (json-prolog:prolog
                 `(and ("current_object_pose" ,name ?pose)
@@ -323,19 +323,20 @@
           :dimensions (make-3d-vector x y *board-thickness*)))))))
 
 (defun query-sem-map (&optional map-name)
-  (let ((map-name
-          (or map-name
-              "http://knowrob.org/kb/ias_semantic_map.owl#SemanticEnvironmentMap_PM580j")))
-    (lazy-mapcan (lambda (bdg)
-                   (with-vars-bound (?o ?type)
-                       bdg
-                     (get-sem-map-objs ?type (obj-name-sym->string ?o))))
-                 (json-prolog:prolog
-                  `(and ("map_root_objects" ,map-name ?objs)
-                        ("member" ?o ?objs)
-                        ("map_object_type" ?o ?tp)
-                        ("rdf_atom_no_ns" ?tp ?type))
-                  :package :sem-map-coll-env))))
+  ;; `map-name' is not used here anymore. This could be changed
+  ;; further on, but right now there is no actual use-case other than
+  ;; using the currently loaded map.
+  (lazy-mapcan (lambda (bdg)
+                 (with-vars-bound (?o ?type)
+                     bdg
+                   (get-sem-map-objs ?type (obj-name-sym->string ?o))))
+               (json-prolog:prolog
+                `(and ("map_name" ?mapname)
+                      ("map_root_objects" ?mapname ?objs)
+                      ("member" ?o ?objs)
+                      ("map_object_type" ?o ?tp)
+                      ("rdf_atom_no_ns" ?tp ?type))
+                :package :sem-map-coll-env)))
 
 (defun query-physical-parts (name)
   (lazy-mapcan
@@ -353,6 +354,11 @@
 
 (defun obj-name-sym->string (name-sym)
   (remove #\' (symbol-name name-sym)))
+
+(defun vecquat->pose (vecquat)
+  (destructuring-bind (tx ty tz qw qx qy qz) vecquat
+    (cl-transforms:make-pose (cl-transforms:make-3d-vector tx ty tz)
+                             (cl-transforms:make-quaternion qx qy qz qw))))
 
 (defun pl-matrix->pose (matrix)
   (transform->pose
