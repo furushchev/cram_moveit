@@ -816,6 +816,7 @@ as only the final configuration IK is generated."
                               touch-links default-collision-entries
                               ignore-collisions
                               destination-validity-only
+                              highlight-links
                               start-robot-state
                               max-tilt)
 "Compute plans for link-name from planning-group to reach the poses
@@ -830,6 +831,7 @@ list and poses-stamped must be the same."
                 link-name planning-group pose-stamped
                 :allowed-collision-objects allowed-collision-objects
                 :touch-links touch-links
+                :highlight-links highlight-links
                 :path-constraints-msg path-constraints-msg
                 :start-robot-state start-robot-state
                 :ignore-collisions ignore-collisions
