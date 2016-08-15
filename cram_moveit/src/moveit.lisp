@@ -101,6 +101,76 @@ MoveIt! framework and registers known conditions."
                   :joint-positions joint-positions
                   :wait-for-execution wait-for-execution))
 
+(defun get-end-robot-state (start-state trajectory)
+  (let* ((joint-names (coerce (roslisp:msg-slot-value (roslisp:msg-slot-value start-state :joint_state) :name) 'list))
+         (joint-velocities nil)
+         (joint-values (coerce (roslisp:msg-slot-value (roslisp:msg-slot-value start-state :joint_state) :position) 'list))
+         (mdof-joint-names (coerce (roslisp:msg-slot-value (roslisp:msg-slot-value start-state :multi_dof_joint_state) :joint_names) 'list))
+         (mdof-joint-values (coerce (roslisp:msg-slot-value (roslisp:msg-slot-value start-state :multi_dof_joint_state) :transforms) 'list))
+         (joint-alist (mapcar (lambda (name value)
+                                (cons name value))
+                              joint-names joint-values))
+         (mdof-joint-alist (mapcar (lambda (name value)
+                                     (cons name value))
+                                   mdof-joint-names mdof-joint-values))
+         (joint-trajectory (roslisp:msg-slot-value trajectory :joint_trajectory))
+         (mdof-joint-trajectory (roslisp:msg-slot-value trajectory :multi_dof_joint_trajectory))
+         (joint-trajectory-names (coerce (roslisp:msg-slot-value joint-trajectory :joint_names) 'list))
+         (mdof-trajectory-names (coerce (roslisp:msg-slot-value mdof-joint-trajectory :joint_names) 'list))
+         (joint-trajectory-values (coerce (roslisp:msg-slot-value joint-trajectory :points) 'list))
+         (mdof-trajectory-values (coerce (roslisp:msg-slot-value mdof-joint-trajectory :points) 'list))
+         (last-joint-value (car (last joint-trajectory-values)))
+         (last-mdof-joint-value (car (last mdof-trajectory-values))))
+    (loop for name in joint-trajectory-names
+          for k from 0 upto (- (length joint-trajectory-names) 1) do
+      (let* ((value (aref (roslisp:msg-slot-value last-joint-value :positions) k))
+             (present (assoc name joint-alist :test #'equal)))
+        (if present
+          (rplacd (assoc name joint-alist :test #'equal)
+                  value)
+          (setf joint-alist
+                (cons (cons name value) joint-alist)))))
+    (setf joint-names (mapcar (lambda (arg)
+                                (car arg))
+                              joint-alist))
+    (setf joint-velocities (mapcar (lambda (arg)
+                                     (declare (ignore arg))
+                                     0.0)
+                                   joint-alist))
+    (setf joint-values  (mapcar (lambda (arg)
+                                  (cdr arg))
+                                joint-alist))
+    (loop for name in mdof-trajectory-names
+          for k from 0 upto (- (length mdof-trajectory-names) 1) do
+      (let* ((value (aref (roslisp:msg-slot-value last-mdof-joint-value :transforms) k))
+             (present (assoc name mdof-joint-alist :test #'equal)))
+        (if present
+          (rplacd (assoc name mdof-joint-alist :test #'equal)
+                  value)
+          (cons (cons name value)
+                mdof-joint-alist))))
+    (setf mdof-joint-names (mapcar (lambda (arg)
+                                     (car arg))
+                                   mdof-joint-alist))
+    (setf mdof-joint-values (mapcar (lambda (arg)
+                                      (cdr arg))
+                                    mdof-joint-alist))
+    (roslisp:make-message "moveit_msgs/RobotState"
+                          :attached_collision_objects (roslisp:msg-slot-value start-state :attached_collision_objects)
+                          :is_diff (roslisp:msg-slot-value start-state :is_diff)
+                          :joint_state (roslisp:make-message "sensor_msgs/JointState"
+                                                             :effort (vector)
+                                                             :header (roslisp:msg-slot-value (roslisp:msg-slot-value start-state :joint_state) :header)
+                                                             :name (coerce joint-names 'vector)
+                                                             :position (coerce joint-values 'vector)
+                                                             :velocity (coerce joint-velocities 'vector))
+                          :multi_dof_joint_state (roslisp:make-message "sensor_msgs/MultiDOFJointState"
+                                                             :header (roslisp:msg-slot-value (roslisp:msg-slot-value start-state :multi_dof_joint_state) :header)
+                                                             :joint_names (coerce mdof-joint-names 'vector)
+                                                             :transforms (coerce mdof-joint-values 'vector)
+                                                             :twist (vector)
+                                                             :wrench (vector)))))
+
 (defun move-link-pose (link-name planning-group pose-stamped
                        &key allowed-collision-objects
                          (path-constraints-msg (roslisp:make-msg "moveit_msgs/Constraints"))

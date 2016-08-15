@@ -49,6 +49,7 @@
    set-collision-matrix-entry
    set-planning-scene-collision-matrix
    combine-collision-matrices
+   get-end-robot-state
    move-link-pose
    plan-link-movement
    plan-link-movements
