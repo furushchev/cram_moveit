@@ -70,8 +70,8 @@ bridge.")
                                         object :dimensions)))
                           (when obj-dim
                             (cond ((eql shape-prop :cylinder)
-                                   (vector (tf:x obj-dim)
-                                           (tf:z obj-dim)))
+                                   (vector (tf:z obj-dim)
+                                           (tf:x obj-dim)))
                                   (t (3dvector->vector obj-dim)))))
                         (case shape-prop
                           (:box (vector 0.1 0.1 0.1))
