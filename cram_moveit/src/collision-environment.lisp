@@ -80,7 +80,9 @@ bridge.")
                  (when (desig-prop-value object :at)
                    (reference (desig-prop-value object :at))))))
       (unless pose-stamped
-        (roslisp:ros-warn (moveit) "No pose-stamped given (neither manually nor in the object-designator) when adding object-designator ~a to the collision environment." object))
+        (roslisp:ros-warn (moveit) "No pose-stamped given (neither manually nor in the object-designator) when adding object-designator ~a to the collision environment." object)
+        (when add
+          (roslisp:ros-error (moveit) "You chose to `add' the object to the scene directly without setting a pose. This will result in unexpected behavior at best. Blindly following your directive anyway.")))
       (register-collision-object
        name
        :primitive-shapes (list (roslisp:make-msg
