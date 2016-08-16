@@ -308,8 +308,11 @@ bridge.")
                                         &key current-pose-stamped touch-links)
   (let* ((name (string-upcase (string name)))
          (col-obj (named-collision-object name))
-         (current-pose-stamped (or current-pose-stamped
-                                   (collision-object-pose name))))
+         (current-pose-stamped
+           (tf:copy-pose-stamped
+            (or current-pose-stamped
+                (collision-object-pose name))
+            :stamp 0.0)))
     (when (and col-obj current-pose-stamped)
       (let ((primitive-shapes (slot-value col-obj 'primitive-shapes))
             (mesh-shapes (slot-value col-obj 'mesh-shapes))
@@ -322,8 +325,7 @@ bridge.")
                   *transformer*
                   :pose current-pose-stamped
                   :target-frame target-link
-                  :timeout *tf-default-timeout*
-                  :use-current-ros-time t))
+                  :timeout *tf-default-timeout*))
                (obj-msg-plain (create-collision-object-message
                                name pose-in-link
                                :primitive-shapes primitive-shapes
