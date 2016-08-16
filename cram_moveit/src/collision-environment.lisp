@@ -447,4 +447,4 @@ bridge.")
   (let ((desig (cram-plan-occasions-events::event-object-designator
                 event)))
     (when desig
-      (register-collision-object desig))))
+      (register-collision-object desig :add t))))
