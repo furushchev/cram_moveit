@@ -51,6 +51,9 @@
   "List of collision object instances registered with the CRAM/MoveIt!
 bridge.")
 
+(defun 3dvector->vector (3dvector)
+  (vector (tf:x 3dvector) (tf:y 3dvector) (tf:z 3dvector)))
+
 (defgeneric register-collision-object (object &rest rest))
 
 (defmethod register-collision-object ((object object-designator)
@@ -63,12 +66,13 @@ bridge.")
            (shape-prop (or (desig-prop-value object :shape) :box))
            (shape (primitive-code shape-prop))
            (dimensions (or
-                        (let ((obj-dim (desig-prop-value object :dimensions)))
+                        (let ((obj-dim (desig-prop-value
+                                        object :dimensions)))
                           (when obj-dim
                             (cond ((eql shape-prop :cylinder)
-                                   (vector (elt obj-dim 2)
-                                           (elt obj-dim 0)))
-                                  (t obj-dim))))
+                                   (vector (tf:x obj-dim)
+                                           (tf:z obj-dim)))
+                                  (t (3dvector->vector obj-dim)))))
                         (case shape-prop
                           (:box (vector 0.1 0.1 0.1))
                           (:sphere (vector 0.1 0.1))
