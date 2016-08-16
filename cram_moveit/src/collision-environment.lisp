@@ -422,7 +422,6 @@ bridge.")
            "Detaching collision object `~a' from link `~a'."
            name (frame-id current-pose-stamped)))))))
 
-
 (defun detach-all-attachments ()
   (let* ((planning-scene
            (roslisp:call-service
@@ -443,3 +442,9 @@ bridge.")
     (loop for attached-object in attached-objects
           do (destructuring-bind (link-name object-id) attached-object
                (detach-collision-object-from-link object-id link-name)))))
+
+(defmethod cram-occasions-events::on-event object-perceived ((event cram-plan-occasions-events::object-perceived-event))
+  (let ((desig (cram-plan-occasions-events::event-object-designator
+                event)))
+    (when desig
+      (register-collision-object desig))))
