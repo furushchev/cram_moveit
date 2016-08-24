@@ -29,6 +29,7 @@
 
 (defvar *moveit-pose-validity-check-lock* nil)
 (defparameter *object-reference-frame* "map")
+(defparameter *needs-ft-fix* nil)
 
 (defun init-moveit-bridge ()
   "Sets up the basic action client communication handles for the
@@ -192,9 +193,22 @@ MoveIt! framework and registers known conditions."
   which case a failure condition is signalled, based on the error code
   returned by the MoveIt! service (as defined in
   moveit_msgs/MoveItErrorCodes)."
-  ;; NOTE(winkler): Since MoveIt! crashes once it receives a frame-id
-  ;; which includes the "/" character at the beginning, we change the
-  ;; frame-id here just in case.
+  ;; NOTE(winkler): This is a PR2 specific fix for when the force
+  ;; torque sensor is included in the URDF.
+  (when *needs-ft-fix*
+    (setf additional-touch-link-groups
+          (append additional-touch-link-groups
+                  `(("l_gripper_palm_link")
+                    ("l_force_torque_link"))))
+    (setf additional-collision-objects-groups
+          (append additional-collision-objects-groups
+                  `(("l_force_torque_link")
+                    ("l_forearm_link"
+                     "l_wrist_roll_link"
+                     "l_gripper_motor_accelerometer_link"))))
+    (setf additional-values
+          (append additional-values
+                  `((t) (t)))))
   (cond ((and joint-names joint-positions)
          (ros-info (moveit) "Move joints"))
         (t (ros-info (moveit)
