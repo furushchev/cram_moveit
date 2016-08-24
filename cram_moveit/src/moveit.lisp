@@ -197,18 +197,21 @@ MoveIt! framework and registers known conditions."
   ;; torque sensor is included in the URDF.
   (when *needs-ft-fix*
     (setf additional-touch-link-groups
-          (append additional-touch-link-groups
+          (append nil;additional-touch-link-groups
                   `(("l_gripper_palm_link")
                     ("l_force_torque_link"))))
     (setf additional-collision-objects-groups
-          (append additional-collision-objects-groups
+          (append nil;additional-collision-objects-groups
                   `(("l_force_torque_link")
                     ("l_forearm_link"
                      "l_wrist_roll_link"
                      "l_gripper_motor_accelerometer_link"))))
     (setf additional-values
-          (append additional-values
+          (append nil;additional-values
                   `((t) (t)))))
+  (format t "~a~%" additional-touch-link-groups)
+  (format t "~a~%" additional-collision-objects-groups)
+  (format t "~a~%" additional-values)
   (cond ((and joint-names joint-positions)
          (ros-info (moveit) "Move joints"))
         (t (ros-info (moveit)
