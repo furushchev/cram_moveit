@@ -100,7 +100,8 @@ bridge.")
        :pose-stamped pose-stamped
        :color (desig-prop-value object :color))
       (when add
-        (add-collision-object name pose-stamped t)))))
+        (add-collision-object name pose-stamped t))
+      name)))
 
 (defmethod register-collision-object ((name string)
                                       &key
@@ -205,6 +206,18 @@ bridge.")
 (defun republish-collision-environment ()
   (loop for object in *known-collision-objects*
         do (add-collision-object (slot-value object 'name) nil t)))
+
+(defun height-of-object (collision-object)
+  ;; NOTE(winkler): Just using the first one for now.
+  (let ((primitive-shape (first (slot-value collision-object
+                                            'primitive-shapes))))
+    (or (when primitive-shape
+          (with-fields (type dimensions) primitive-shape
+            (ecase type
+              (1 (elt dimensions 2)) ;; Box
+              (3 (elt dimensions 0))))) ;; Cylinder
+        0.0)))
+    
 
 (defun add-collision-object (name &optional pose-stamped quiet)
   (when name
@@ -449,4 +462,15 @@ bridge.")
   (let ((desig (cram-plan-occasions-events::event-object-designator
                 event)))
     (when desig
-      (register-collision-object desig :add t))))
+      (let* ((name (register-collision-object desig))
+             (collision-object (named-collision-object name))
+             (pose-stamped (collision-object-pose name))
+             (pose-stamped
+               (let ((height (height-of-object collision-object)))
+                 (tf:copy-pose-stamped
+                  pose-stamped
+                  :origin (tf:v+ (tf:origin pose-stamped)
+                                 (tf:make-3d-vector
+                                  0 0 (/ height 2)))))))
+        (add-collision-object
+         name pose-stamped)))))
