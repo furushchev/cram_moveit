@@ -69,6 +69,7 @@
    detach-collision-object-from-link
    get-joint-value
    set-collision-object-pose
+   compute-cartesian-path
    compute-fk
    compute-ik
    execute-trajectory
