@@ -57,7 +57,10 @@
                      :name name
                      :type type
                      :pose (vecquat->pose ?pose)
-                     :dimensions (apply #'make-3d-vector ?dim))))
+                     :dimensions (apply #'make-3d-vector
+                                        (mapcar #'(lambda (s)
+                                                    (eval (read-from-string (symbol-name s))))
+                                                ?dim)))))
                (json-prolog:prolog
                 `(and ("current_object_pose" ,name ?pose)
                       ("map_object_dimensions" ,name ?w ?d ?h)
@@ -71,7 +74,10 @@
                    (make-box
                     name type
                     (vecquat->pose ?pose)
-                    (apply #'make-3d-vector ?dim)
+                    (apply #'make-3d-vector
+                           (mapcar #'(lambda (s)
+                                       (eval (read-from-string (symbol-name s))))
+                                   ?dim))
                     :top nil)))
                (json-prolog:prolog
                 `(and ("current_object_pose" ,name ?pose)
@@ -87,7 +93,10 @@
                     (make-box
                      name type
                      (vecquat->pose ?pose)
-                     (apply #'make-3d-vector ?dim)
+                    (apply #'make-3d-vector
+                           (mapcar #'(lambda (s)
+                                       (eval (read-from-string (symbol-name s))))
+                                   ?dim))
                      :front nil)
                     (query-physical-parts name))))
                (json-prolog:prolog
@@ -104,7 +113,10 @@
                     (make-box
                      name type
                      (vecquat->pose ?pose)
-                     (apply #'make-3d-vector ?dim)
+                    (apply #'make-3d-vector
+                           (mapcar #'(lambda (s)
+                                       (eval (read-from-string (symbol-name s))))
+                                   ?dim))
                      :front nil)
                     (query-physical-parts name))))
                (json-prolog:prolog
@@ -121,7 +133,10 @@
                     (make-box
                      name type
                      (vecquat->pose ?pose)
-                     (apply #'make-3d-vector ?dim)
+                    (apply #'make-3d-vector
+                           (mapcar #'(lambda (s)
+                                       (eval (read-from-string (symbol-name s))))
+                                   ?dim))
                      :front nil)
                     (query-physical-parts name))))
                (json-prolog:prolog
@@ -138,7 +153,10 @@
                     (make-box
                      name type
                      (vecquat->pose ?pose)
-                     (apply #'make-3d-vector ?dim)
+                    (apply #'make-3d-vector
+                           (mapcar #'(lambda (s)
+                                       (eval (read-from-string (symbol-name s))))
+                                   ?dim))
                      :front nil)
                     (query-physical-parts name))))
                (json-prolog:prolog
@@ -155,7 +173,10 @@
                     (make-box
                      name type
                      (vecquat->pose ?pose)
-                     (apply #'make-3d-vector ?dim)
+                     (apply #'make-3d-vector
+                            (mapcar #'(lambda (s)
+                                        (eval (read-from-string (symbol-name s))))
+                                    ?dim))
                      :front nil)
                     (query-physical-parts name))))
                (json-prolog:prolog
@@ -172,7 +193,10 @@
                     (make-box
                      name type
                      (vecquat->pose ?pose)
-                     (apply #'make-3d-vector ?dim)
+                     (apply #'make-3d-vector
+                            (mapcar #'(lambda (s)
+                                        (eval (read-from-string (symbol-name s))))
+                                    ?dim))
                      :front nil)
                     (query-physical-parts name))))
                (json-prolog:prolog
@@ -189,7 +213,10 @@
                     (make-box
                      name type
                      (vecquat->pose ?pose)
-                     (apply #'make-3d-vector ?dim)
+                     (apply #'make-3d-vector
+                            (mapcar #'(lambda (s)
+                                        (eval (read-from-string (symbol-name s))))
+                                    ?dim))
                      :front nil)
                     (query-physical-parts name))))
                (json-prolog:prolog
@@ -206,7 +233,10 @@
                     (make-box
                      name type
                      (vecquat->pose ?pose)
-                     (apply #'make-3d-vector ?dim)
+                     (apply #'make-3d-vector
+                            (mapcar #'(lambda (s)
+                                        (eval (read-from-string (symbol-name s))))
+                                    ?dim))
                      :front nil)
                     (query-physical-parts name))))
                (json-prolog:prolog
@@ -224,7 +254,10 @@
                      :type type
                      :index 0
                      :pose (vecquat->pose ?pose)
-                     :dimensions (apply #'make-3d-vector ?dim))))
+                     :dimensions (apply #'make-3d-vector
+                                        (mapcar #'(lambda (s)
+                                                    (eval (read-from-string (symbol-name s))))
+                                                ?dim)))))
                (json-prolog:prolog
                 `(and ("current_object_pose" ,name ?pose)
                       ("map_object_dimensions" ,name ?w ?d ?h)
